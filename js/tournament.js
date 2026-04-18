@@ -45,6 +45,54 @@ export function recordResult(t, roundIdx, matchId, result) {
   return next;
 }
 
+export function swapPlayer(t, roundIdx, matchId, slot, newPlayerId) {
+  if (slot !== "p1" && slot !== "p2") return t;
+  const round = t.rounds[roundIdx];
+  if (!round) return t;
+  const next = structuredClone(t);
+  const nextRound = next.rounds[roundIdx];
+  const match = nextRound.find((m) => m.id === matchId);
+  if (!match) return t;
+  const oldPlayerId = match[slot];
+  if (oldPlayerId === newPlayerId) return t;
+
+  const otherSlotInSameMatch = slot === "p1" ? "p2" : "p1";
+  if (match[otherSlotInSameMatch] === newPlayerId) {
+    match[slot] = newPlayerId;
+    match[otherSlotInSameMatch] = oldPlayerId;
+    if (match.result === "p1") match.result = "p2";
+    else if (match.result === "p2") match.result = "p1";
+    return next;
+  }
+
+  let otherMatch = null;
+  let otherSlot = null;
+  for (const m of nextRound) {
+    if (m.id === matchId) continue;
+    if (m.p1 === newPlayerId) { otherMatch = m; otherSlot = "p1"; break; }
+    if (m.p2 === newPlayerId) { otherMatch = m; otherSlot = "p2"; break; }
+  }
+
+  match[slot] = newPlayerId;
+  if (otherMatch) {
+    otherMatch[otherSlot] = oldPlayerId;
+    otherMatch.result = (otherMatch.p1 === BYE || otherMatch.p2 === BYE) ? "bye" : null;
+  }
+  match.result = (match.p1 === BYE || match.p2 === BYE) ? "bye" : null;
+  return next;
+}
+
+export function roundParticipants(round) {
+  const seen = new Set();
+  const ids = [];
+  for (const m of round) {
+    for (const id of [m.p1, m.p2]) {
+      if (!seen.has(id)) { seen.add(id); ids.push(id); }
+    }
+  }
+  return ids;
+}
+
 export function currentRoundComplete(t) {
   if (t.rounds.length === 0) return false;
   const cur = t.rounds[t.rounds.length - 1];
