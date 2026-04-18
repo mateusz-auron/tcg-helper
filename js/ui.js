@@ -3,6 +3,8 @@ import {
   SCORING_PRESETS,
   createTournament,
   recordResult,
+  swapPlayer,
+  roundParticipants,
   advanceRound,
   currentRoundComplete,
   computeStandings,
@@ -356,6 +358,7 @@ function renderPairing(t, roundIdx, m, onResultChanged) {
   const card = h("article", { class: "pairing" });
   const isBye = m.p1 === BYE || m.p2 === BYE;
   const realPlayer = m.p1 === BYE ? m.p2 : m.p1;
+  const participants = roundParticipants(t.rounds[roundIdx]);
 
   const bracketLabel = m.bracket === "winners" ? "Winners" :
     m.bracket === "losers" ? "Losers" :
@@ -366,17 +369,31 @@ function renderPairing(t, roundIdx, m, onResultChanged) {
     bracketLabel ? h("small", {}, bracketLabel) : null,
   ));
 
+  function makeSlotSelect(slot, currentId) {
+    return h("select", {
+      class: "player-select",
+      onchange: (e) => {
+        const updated = swapPlayer(loadActive(), roundIdx, m.id, slot, e.target.value);
+        saveActive(updated);
+        navigate("#/play");
+      },
+    },
+      ...participants.map((pid) =>
+        h("option", { value: pid, selected: currentId === pid }, playerName(t, pid))
+      ),
+    );
+  }
+
   if (isBye) {
-    card.appendChild(h("p", {},
-      h("strong", {}, playerName(t, realPlayer)),
-      " advances (bye).",
-    ));
+    const realSlot = m.p1 === BYE ? "p2" : "p1";
+    card.appendChild(h("div", {}, makeSlotSelect(realSlot, realPlayer)));
+    card.appendChild(h("p", {}, "Advances (bye)."));
     return card;
   }
 
-  card.appendChild(h("div", {}, h("strong", {}, playerName(t, m.p1))));
+  card.appendChild(h("div", {}, makeSlotSelect("p1", m.p1)));
   card.appendChild(h("div", { class: "vs" }, "vs"));
-  card.appendChild(h("div", {}, h("strong", {}, playerName(t, m.p2))));
+  card.appendChild(h("div", {}, makeSlotSelect("p2", m.p2)));
 
   const timerEl = h("div", { class: "timer" }, formatDuration(t.matchCapMin * 60 * 1000));
   const timer = createMatchTimer(
