@@ -1,6 +1,7 @@
 import { FORMATS, FORMAT_LIST, BYE } from "./formats.js";
 import {
   SCORING_PRESETS,
+  OMW_MODES,
   createTournament,
   recordResult,
   swapPlayer,
@@ -22,6 +23,7 @@ import { createMatchTimer, formatDuration } from "./timer.js";
 
 const DEFAULT_PLAYER_COUNT = 5;
 const DEFAULT_SCORING = "3-1-0";
+const DEFAULT_OMW_MODE = "mtg";
 const DEFAULT_TIME_BUDGET_MIN = 180;
 const DEFAULT_MATCH_CAP_MIN = 40;
 
@@ -141,6 +143,7 @@ export function renderNew(root) {
     playerCount: DEFAULT_PLAYER_COUNT,
     playerNames: Array(DEFAULT_PLAYER_COUNT).fill(""),
     scoringKey: DEFAULT_SCORING,
+    omwMode: DEFAULT_OMW_MODE,
     timeBudgetMin: DEFAULT_TIME_BUDGET_MIN,
     matchCapMin: DEFAULT_MATCH_CAP_MIN,
     format: "round-robin",
@@ -202,6 +205,14 @@ export function renderNew(root) {
     },
       ...Object.entries(SCORING_PRESETS).map(([key, cfg]) =>
         h("option", { value: key, selected: key === state.scoringKey }, cfg.label)
+      )
+    );
+
+    const omwSelect = h("select", {
+      onchange: (e) => { state.omwMode = e.target.value; },
+    },
+      ...Object.entries(OMW_MODES).map(([key, cfg]) =>
+        h("option", { value: key, selected: key === state.omwMode }, cfg.label)
       )
     );
 
@@ -274,6 +285,7 @@ export function renderNew(root) {
           playerNames: state.playerNames,
           format: state.format,
           scoring: SCORING_PRESETS[state.scoringKey],
+          omwMode: state.omwMode,
           timeBudgetMin: state.timeBudgetMin,
           matchCapMin: state.matchCapMin,
         });
@@ -285,6 +297,7 @@ export function renderNew(root) {
       h("label", {}, "Number of players (2–8)", countInput),
       playerFields,
       h("label", {}, "Scoring", scoringSelect),
+      h("label", {}, "OMW% tiebreaker", omwSelect),
       h("div", { class: "grid" },
         h("label", {}, "Time budget (min)", budgetInput),
         h("label", {}, "Match cap (min)", capInput),

@@ -8,6 +8,11 @@ export const SCORING_PRESETS = {
   "1-0.5-0": { label: "1 / 0.5 / 0 — draws allowed (chess-style)", win: 1, draw: 0.5, loss: 0 },
 };
 
+export const OMW_MODES = {
+  mtg: { label: "MTG standard — byes count as wins, 33% floor" },
+  strict: { label: "Strict — byes excluded, no floor" },
+};
+
 export function createTournament(cfg) {
   const id = `t_${new Date().toISOString().replace(/[:.]/g, "-")}`;
   const players = cfg.playerNames.map((name, i) => ({
@@ -22,6 +27,7 @@ export function createTournament(cfg) {
     createdAt: new Date().toISOString(),
     format: cfg.format,
     scoring: cfg.scoring,
+    omwMode: cfg.omwMode || "mtg",
     timeBudgetMin: cfg.timeBudgetMin,
     matchCapMin: cfg.matchCapMin,
     players,
@@ -123,6 +129,7 @@ export function computeStandings(t) {
       w: 0,
       d: 0,
       l: 0,
+      byeWins: 0,
       opponents: [],
     };
   }
@@ -133,6 +140,7 @@ export function computeStandings(t) {
         const real = m.p1 === BYE ? m.p2 : m.p1;
         if (rows[real]) {
           rows[real].w += 1;
+          rows[real].byeWins += 1;
           rows[real].points += t.scoring.win;
         }
         continue;
@@ -159,16 +167,24 @@ export function computeStandings(t) {
     }
   }
   // Opponents' Match Win % for tiebreaker.
+  const mode = t.omwMode === "strict" ? "strict" : "mtg";
   const winRates = {};
   for (const id of Object.keys(rows)) {
     const r = rows[id];
-    const played = r.w + r.d + r.l;
-    winRates[id] = played > 0 ? r.w / played : 0;
+    if (mode === "strict") {
+      const realPlayed = r.w + r.d + r.l - r.byeWins;
+      const realWins = r.w - r.byeWins;
+      winRates[id] = realPlayed > 0 ? realWins / realPlayed : 0;
+    } else {
+      const played = r.w + r.d + r.l;
+      winRates[id] = played > 0 ? r.w / played : 0;
+    }
   }
+  const floor = mode === "strict" ? 0 : 0.33;
   for (const id of Object.keys(rows)) {
     const r = rows[id];
     if (r.opponents.length === 0) { r.omwPct = 0; continue; }
-    const sum = r.opponents.reduce((acc, oid) => acc + Math.max(winRates[oid] || 0, 0.33), 0);
+    const sum = r.opponents.reduce((acc, oid) => acc + Math.max(winRates[oid] || 0, floor), 0);
     r.omwPct = sum / r.opponents.length;
   }
   const list = Object.values(rows);
