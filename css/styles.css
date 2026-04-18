@@ -1,1 +1,67 @@
 /* Project-specific overrides for Pico.css defaults. */
+
+.pairings {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.pairing header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pairing .vs {
+  text-align: center;
+  font-variant: small-caps;
+  opacity: 0.6;
+  margin: 0.25rem 0;
+}
+
+.pairing .timer {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+.pairing .timer.expired {
+  color: var(--pico-del-color, #c62828);
+  font-weight: bold;
+}
+
+.pairing .timer-controls {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.fit-yes { color: #2e7d32; }
+.fit-no { color: #c62828; }
+
+.winner-banner {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: var(--pico-primary-background, #1095c1);
+  color: var(--pico-primary-inverse, white);
+  border-radius: var(--pico-border-radius, 0.25rem);
+  margin-bottom: 1.5rem;
+}
+
+.winner-banner h2 {
+  margin: 0;
+  color: inherit;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.row > * {
+  margin: 0;
+}
